@@ -1,7 +1,4 @@
-#First connect to Skyscanner API
-API_file = open("API.txt",'r')
-API_key = API_file.read()
-API_key = API_key[:-1]
+import API_connect
 
 #Then decide from which airports you want to fly and at what times
 departure_airport1 = ["BCN","GRO"]
@@ -13,4 +10,6 @@ departure_time2 = ["Sunday afternoon or later"]
 arrival_airport2 = ["BCN", "GRO"]
 arrival_time2 = ["Sunday night"]
 
-#On every request you must specify country and currency and language http://partners.api.skyscanner.net/apiservices/carhire/v2/pricing/{market}/{currency}/{locale}/...
+API_connect("ES", "EUR", "es-ES")
+
+http://partners.api.skyscanner.net/apiservices/browsequotes/v1.0/ES/EUR/es-ES/{originPlace}/{destinationPlace}/{outboundPartialDate}/{inboundPartialDate}?apiKey={apiKey}
