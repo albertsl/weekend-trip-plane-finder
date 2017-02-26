@@ -59,7 +59,6 @@ class APIconnect:
             placeList.append(SkyScannerPlace(item['PlaceName'], item['CountryId'], item['RegionId'], item['PlaceId'], item['CityId'], item['CountryName']))
         return url
 
-    #Still working from here till the end
     def getPlanes(self, origin, destination, departure_date):
         ''' Returns a list of SkyScannerFlight objects for the given trip conditions'''
         url = "http://partners.api.skyscanner.net/apiservices/browseroutes/v1.0/{}/{}/{}/{}/{}/{}/?apiKey={}".format(self.market, self.currency, self.locale, origin, destination, departure_date, self.API_key)
@@ -67,14 +66,37 @@ class APIconnect:
         dataDict = readData(data)
 
         currency = dataDict['Currencies'][0]['Code']
-        quoteList = []
+        flightList = []
         for item in dataDict['Quotes']:
             if item['Direct'] == True:
-                quoteList.append(SkyScannerFlight(currency, item['MinPrice'], item['OutboundLeg']['CarrierIds'][0], item['OutboundLeg']['OriginId'], item['OutboundLeg']['DestinationId'], item['OutboundLeg']['DepartureDate'], item['QuoteDateTime']))
+                flightList.append(SkyScannerFlight(currency, item['MinPrice'], item['OutboundLeg']['CarrierIds'][0], item['OutboundLeg']['OriginId'], item['OutboundLeg']['DestinationId'], item['OutboundLeg']['DepartureDate'], item['QuoteDateTime']))
+        return flightList
+
+    #Still working from here till the end
+    def whereToGo(self, origin, departure_date, return_date):
+        self.getPlanes(origin, "anywhere", departure_date)
+        # For every place on the list, get the return possibilities
+        # self.getPlanes("", origin, return_date)
+        #
+        # url = "http://partners.api.skyscanner.net/apiservices/browsequotes/v1.0/{}/{}/{}/{}/{}/{}/{}?apiKey={}".format(self.market, self.currency, self.locale, origin, "anywhere", departure_date, return_date, self.API_key)
+        # data = getData(url)
+        # dataDict = readData(data)
+
+        # currency = dataDict['Currencies'][0]['Code']
+        # quoteList = []
+        # for item in dataDict['Quotes']:
+        #     quoteList.append((SkyScannerFlight(currency, ),
+        #                         SkyScannerFlight(currency, ))
+        # return quoteList
+
+    def whenToGo(self, origin, destination):
+        url = "http://partners.api.skyscanner.net/apiservices/browsequotes/v1.0/{}/{}/{}/{}/{}/{}/{}?apiKey={}".format(self.market, self.currency, self.locale, origin, destination, "anytime", "anytime", self.API_key)
+        data = getData(url)
+        dataDict = readData(data)
         return url
 
-        '''
-        Browse Routes
+'''
+Browse Routes
 
 Use Browse Routes to retrieve a list of destinations and prices. You can use 'anywhere' to get a list of countries, or you can specify a country or a city (using its Skyscanner code e.g. CDG for Paris Charles-de-Gaulle airport or LOND for London).
 
@@ -104,25 +126,3 @@ http://partners.api.skyscanner.net/apiservices/browsequotes/v1.0/GB/GBP/en-GB/US
 
 http://en.business.skyscanner.net/dev-guidelines-api
 '''
-
-    def whereToGo(self, origin, departure_date, return_date):
-        self.getPlanes(origin, "anywhere", departure_date)
-        # For every place on the list, get the return possibilities
-        # self.getPlanes("", origin, return_date)
-        #
-        # url = "http://partners.api.skyscanner.net/apiservices/browsequotes/v1.0/{}/{}/{}/{}/{}/{}/{}?apiKey={}".format(self.market, self.currency, self.locale, origin, "anywhere", departure_date, return_date, self.API_key)
-        # data = getData(url)
-        # dataDict = readData(data)
-
-        # currency = dataDict['Currencies'][0]['Code']
-        # quoteList = []
-        # for item in dataDict['Quotes']:
-        #     quoteList.append((SkyScannerFlight(currency, ),
-        #                         SkyScannerFlight(currency, ))
-        # return quoteList
-
-    def whenToGo(self, origin, destination):
-        url = "http://partners.api.skyscanner.net/apiservices/browsequotes/v1.0/{}/{}/{}/{}/{}/{}/{}?apiKey={}".format(self.market, self.currency, self.locale, origin, destination, "anytime", "anytime", self.API_key)
-        data = getData(url)
-        dataDict = readData(data)
-        return url
