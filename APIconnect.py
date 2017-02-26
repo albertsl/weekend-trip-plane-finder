@@ -152,17 +152,20 @@ class APIconnect:
         if low_cost:
             flightList = lowCostFlights(flightList)
 
+        CheckedDestinationsList = []
         for flight in flightList:
-            flightList2 = self.getFlights(flight.getDestination(), origin, return_date)
-            if low_cost:
-                flightList2 = lowCostFlights(flightList2)
-            if flightList2 != []:
-                for flight2 in flightList2:
-                    price1 = flight.getPrice()
-                    price2 = flight2.getPrice()
-                    combinedPrice = price1 + price2
-                    if combinedPrice < PRICE_LIMIT and flight.getCurrency() == "EUR":
-                        possibilities.append((getPlaceNameFromPlaceSkyScannerCode(flight2.getOrigin(), self), combinedPrice))
+            if flight.getDestination() not in CheckedDestinationsList:
+                CheckedDestinationsList.append(flight.getDestination())
+                flightList2 = self.getFlights(flight.getDestination(), origin, return_date)
+                if low_cost:
+                    flightList2 = lowCostFlights(flightList2)
+                if flightList2 != []:
+                    for flight2 in flightList2:
+                        price1 = flight.getPrice()
+                        price2 = flight2.getPrice()
+                        combinedPrice = price1 + price2
+                        if combinedPrice < PRICE_LIMIT and flight.getCurrency() == "EUR":
+                            possibilities.append((getPlaceNameFromPlaceSkyScannerCode(flight2.getOrigin(), self), combinedPrice))
         return parsePossibilityList(possibilities)
 
         # For every place on the list, get the return possibilities
