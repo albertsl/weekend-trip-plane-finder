@@ -36,7 +36,7 @@ class SkyScannerFlight:
         self.quoteDateTime = quoteDateTime
         self.direct = direct
     def __str__(self):
-        return "goinig to {} for {} {}".format(self.originId, self.price, self.currency)
+        return "going to {} for {} {}".format(self.originId, self.price, self.currency)
     def getOrigin(self):
         return self.originId
 
@@ -73,7 +73,11 @@ class APIconnect:
         currency = dataDict['Currencies'][0]['Code']
         flightList = []
         for item in dataDict['Quotes']:
-            flightList.append(SkyScannerFlight(currency, item['MinPrice'], item['OutboundLeg']['CarrierIds'][0], item['OutboundLeg']['OriginId'], item['OutboundLeg']['DestinationId'], item['OutboundLeg']['DepartureDate'], item['QuoteDateTime'], item['Direct']))
+            try:
+                flightList.append(SkyScannerFlight(currency, item['MinPrice'], item['OutboundLeg']['CarrierIds'][0], item['OutboundLeg']['OriginId'], item['OutboundLeg']['DestinationId'], item['OutboundLeg']['DepartureDate'], item['QuoteDateTime'], item['Direct']))
+            except:
+                print "There was an error in the getFlights function while processing the query:"
+                print item
         return flightList
 
     #Still working from here till the end
