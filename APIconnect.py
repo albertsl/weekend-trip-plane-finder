@@ -13,6 +13,7 @@ def readData(data):
     return JSONData
 
 def lowCostFlights(flightList):
+    '''From a given list of SkyScannerFlight object, gets rid of the ones that don't fit my low cost criteria'''
     newFlightList = []
     for flight in flightList:
         if flight.direct == True and (flight.currency == "EUR" and flight.price < 150):
@@ -20,26 +21,32 @@ def lowCostFlights(flightList):
             print flight
     return newFlightList
 
+def getSkyScannerCodeFromRnid(dataDict, rnid):
+    return dataDict['Places']
+
 class SkyScannerPlace:
     def __init__(self, PlaceName, CountryId, RegionId, PlaceId, CityId, CountryName):
-        self.PlaceName = PlaceName
-        self.CountryId = CountryId
-        self.RegionId = RegionId
-        self.PlaceId = PlaceId
-        self.CityId = CityId
-        self.CountryName = CountryName
+        #ToDo: Check if PlaceId is Rnid or SkyScannerCode
+        self.placeName = PlaceName
+        self.countrySkyScannerCode = CountryId
+        self.regionId = RegionId
+        self.placeSkyScannerCode = PlaceId
+        self.citySkyScannerCode = CityId
+        self.countryName = CountryName
     def printPlace(self):
         print self.PlaceName + ", " + self.CountryName
     def getPlaceId(self):
-        return self.PlaceId
+        return self.placeSkyScannerCode
 
 class SkyScannerFlight:
-    def __init__(self, currency, price, carrierId, originId, destinationId, departureDate, quoteDateTime, direct):
+    def __init__(self, currency, price, carrierId, originId, destinationId, originSkyScannerCode, destinationSkyScannerCode, departureDate, quoteDateTime, direct):
         self.currency = currency
         self.price = price
         self.carrierId = carrierId
         self.originId = originId
         self.destinationId = destinationId
+        self.originSkyScannerCode = originSkyScannerCode
+        self.destinationSkyScannerCode = destinationSkyScannerCode
         self.departureDate = departureDate
         self.quoteDateTime = quoteDateTime
         self.direct = direct
@@ -47,6 +54,8 @@ class SkyScannerFlight:
         return "going to {} for {} {}".format(self.destinationId, self.price, self.currency)
     def getOrigin(self):
         return self.originId
+    def getDestination(self):
+        return self.destinationId
 
 class APIconnect:
     def __init__(self, mkt, cur, loc):
@@ -61,7 +70,7 @@ class APIconnect:
         API_key = API_key[:-1] #The txt file has a \n at the end.
         return API_key
 
-    def getListOfPlaces(self, query):
+    def getListOfPlaces(self, query, getUrl=False):
         '''Returns a list of SkyScannerPlace objects for a given query '''
         url = "http://partners.api.skyscanner.net/apiservices/autosuggest/v1.0/{}/{}/{}/?query={}&apiKey={}".format(self.market, self.currency, self.locale, query, self.API_key)
         data = getData(url)
@@ -70,9 +79,12 @@ class APIconnect:
         placeList = []
         for item in dataDict['Places']:
             placeList.append(SkyScannerPlace(item['PlaceName'], item['CountryId'], item['RegionId'], item['PlaceId'], item['CityId'], item['CountryName']))
-        return url
+        if getUrl:
+            return placeList, url
+        else:
+            return placeList
 
-    def getFlights(self, origin, destination, departure_date):
+    def getFlights(self, origin, destination, departure_date, getUrl = False):
         ''' Returns a list of SkyScannerFlight objects for the given trip conditions'''
         url = "http://partners.api.skyscanner.net/apiservices/browseroutes/v1.0/{}/{}/{}/{}/{}/{}/?apiKey={}".format(self.market, self.currency, self.locale, origin, destination, departure_date, self.API_key)
         data = getData(url)
@@ -82,17 +94,31 @@ class APIconnect:
         flightList = []
         for item in dataDict['Quotes']:
             try:
-                flightList.append(SkyScannerFlight(currency, item['MinPrice'], item['OutboundLeg']['CarrierIds'][0], item['OutboundLeg']['OriginId'], item['OutboundLeg']['DestinationId'], item['OutboundLeg']['DepartureDate'], item['QuoteDateTime'], item['Direct']))
+                originId = item['OutboundLeg']['OriginId']
+                destinationId = item['OutboundLeg']['DestinationId']
+                originSkyScannerCode = getSkyScannerCodeFromRnid(dataDict, originId)
+                destinationSkyScannerCode = getSkyScannerCodeFromRnid(dataDict, destinationId)
+                flightList.append(SkyScannerFlight(currency, item['MinPrice'], item['OutboundLeg']['CarrierIds'][0], originId, destinationId, originSkyScannerCode, destinationSkyScannerCode, item['OutboundLeg']['DepartureDate'], item['QuoteDateTime'], item['Direct']))
             except:
                 print "There was an error in the getFlights function while processing the query:"
                 print item
-        return flightList
+        if getUrl:
+            return flightList, url
+        else:
+            return flightList
 
     #Still working from here till the end
     def whereToGo(self, origin, departure_date, return_date, low_cost=True):
         flightList = self.getFlights(origin, "anywhere", departure_date)
         if low_cost:
             flightList = lowCostFlights(flightList)
+
+        for flight in flightList:
+            flightList2 = self.getFlights(flight.getDestination(), origin, return_date)
+            if low_cost:
+                flightList2 = lowCostFlights(flightList2)
+            if flightList2 != []:
+                print flightList2
 
         # For every place on the list, get the return possibilities
         # self.getFlights("", origin, return_date)
