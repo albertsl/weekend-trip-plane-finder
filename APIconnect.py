@@ -1,6 +1,8 @@
 import urllib2
 import json
 
+PRICE_LIMIT = 100
+
 def getData(url):
     '''Returns the data that the Skyscanner API returns for a given URL'''
     response = urllib2.urlopen(url)
@@ -16,13 +18,40 @@ def lowCostFlights(flightList):
     '''From a given list of SkyScannerFlight object, gets rid of the ones that don't fit my low cost criteria'''
     newFlightList = []
     for flight in flightList:
-        if flight.direct == True and (flight.currency == "EUR" and flight.price < 150):
+        if flight.direct == True and (flight.currency == "EUR" and flight.price < PRICE_LIMIT):
             newFlightList.append(flight)
-            print flight
     return newFlightList
 
 def getSkyScannerCodeFromRnid(dataDict, rnid):
-    return dataDict['Places']
+    for place in dataDict['Places']:
+        if place['PlaceId'] == rnid:
+            return place['SkyscannerCode']
+
+def getCitySkyScannerCodeFromPlaceSkyScannerCode(placeSkyScannerCode, APIconnection):
+    '''Given an airport code, it returns the city code'''
+    placeList = APIconnection.getListOfPlaces(placeSkyScannerCode)
+    for item in placeList:
+        if item.getPlaceSkyScannerCode == placeSkyScannerCode:
+            return item.getCitySkyScannerCode()
+
+def getPlaceNameFromPlaceSkyScannerCode(placeSkyScannerCode, APIconnection):
+    '''Given an airport code, it returns the place name'''
+    placeSkyScannerCode = placeSkyScannerCode + '-sky'
+    placeList = APIconnection.getListOfPlaces(placeSkyScannerCode)
+    for item in placeList:
+        if item.getPlaceSkyScannerCode() == placeSkyScannerCode:
+            return item.getPlaceName()
+
+def parsePossibilityList(possibilityList):
+    '''Given a possibility list with tuples like (city_name, price) returns only the lowest prices'''
+    d = {}
+    for item in possibilityList:
+        if item[0] not in d:
+            d[item[0]] = item[1]
+        else:
+            if d[item[0]] > item[1]:
+                d[item[0]] = item[1]
+    return d.items()
 
 class SkyScannerPlace:
     def __init__(self, PlaceName, CountryId, RegionId, PlaceId, CityId, CountryName):
@@ -33,10 +62,14 @@ class SkyScannerPlace:
         self.placeSkyScannerCode = PlaceId
         self.citySkyScannerCode = CityId
         self.countryName = CountryName
-    def printPlace(self):
+    def __str__(self):
         print self.PlaceName + ", " + self.CountryName
-    def getPlaceId(self):
+    def getPlaceSkyScannerCode(self):
         return self.placeSkyScannerCode
+    def getCitySkyScannerCode(self):
+        return self.citySkyScannerCode
+    def getPlaceName(self):
+        return self.placeName
 
 class SkyScannerFlight:
     def __init__(self, currency, price, carrierId, originId, destinationId, originSkyScannerCode, destinationSkyScannerCode, departureDate, quoteDateTime, direct):
@@ -51,11 +84,15 @@ class SkyScannerFlight:
         self.quoteDateTime = quoteDateTime
         self.direct = direct
     def __str__(self):
-        return "going to {} for {} {}".format(self.destinationId, self.price, self.currency)
+        return "going from {} to {} for {} {}".format(self.getOrigin(), self.getDestination(), self.getPrice(), self.getCurrency())
     def getOrigin(self):
-        return self.originId
+        return self.originSkyScannerCode
     def getDestination(self):
-        return self.destinationId
+        return self.destinationSkyScannerCode
+    def getPrice(self):
+        return self.price
+    def getCurrency(self):
+        return self.currency
 
 class APIconnect:
     def __init__(self, mkt, cur, loc):
@@ -109,6 +146,8 @@ class APIconnect:
 
     #Still working from here till the end
     def whereToGo(self, origin, departure_date, return_date, low_cost=True):
+        possibilities = []
+
         flightList = self.getFlights(origin, "anywhere", departure_date)
         if low_cost:
             flightList = lowCostFlights(flightList)
@@ -118,7 +157,13 @@ class APIconnect:
             if low_cost:
                 flightList2 = lowCostFlights(flightList2)
             if flightList2 != []:
-                print flightList2
+                for flight2 in flightList2:
+                    price1 = flight.getPrice()
+                    price2 = flight2.getPrice()
+                    combinedPrice = price1 + price2
+                    if combinedPrice < PRICE_LIMIT and flight.getCurrency() == "EUR":
+                        possibilities.append((getPlaceNameFromPlaceSkyScannerCode(flight2.getOrigin(), self), combinedPrice))
+        return parsePossibilityList(possibilities)
 
         # For every place on the list, get the return possibilities
         # self.getFlights("", origin, return_date)
