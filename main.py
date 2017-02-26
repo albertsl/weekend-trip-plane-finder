@@ -23,9 +23,9 @@ def planesForTheWeekend(friday, departureCityList):
     APIconnection = APIconnect.APIconnect("ES", "EUR", "es-ES")
     possibilityList = []
     fridaySplit = friday.split("-")
-    fridaySplit[-1] = str(int(fridaySplit[-1])+1)
+    fridaySplit[-1] = str(int(fridaySplit[-1])+1).zfill(2)
     saturday = '-'.join(fridaySplit)
-    fridaySplit[-1] = str(int(fridaySplit[-1])+1)
+    fridaySplit[-1] = str(int(fridaySplit[-1])+1).zfill(2)
     sunday = '-'.join(fridaySplit)
 
     for city in departureCityList:
@@ -35,4 +35,4 @@ def planesForTheWeekend(friday, departureCityList):
 
     return APIconnect.parsePossibilityList(possibilityList)
 
-print planesForTheWeekend("2017-05-10", ["BCN-sky","GRO-sky"])
+print planesForTheWeekend("2017-05-06", ["BCN-sky","GRO-sky"])
