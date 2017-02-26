@@ -62,7 +62,7 @@ class APIconnect:
     #Still working from here till the end
     def getPlanes(self, origin, destination, departure_date):
         ''' Returns a list of SkyScannerFlight objects for the given trip conditions'''
-        url = "http://partners.api.skyscanner.net/apiservices/browsequotes/v1.0/{}/{}/{}/{}/{}/{}/?apiKey={}".format(self.market, self.currency, self.locale, origin, destination, departure_date, self.API_key)
+        url = "http://partners.api.skyscanner.net/apiservices/browseroutes/v1.0/{}/{}/{}/{}/{}/{}/?apiKey={}".format(self.market, self.currency, self.locale, origin, destination, departure_date, self.API_key)
         data = getData(url)
         dataDict = readData(data)
 
@@ -71,7 +71,39 @@ class APIconnect:
         for item in dataDict['Quotes']:
             if item['Direct'] == True:
                 quoteList.append(SkyScannerFlight(currency, item['MinPrice'], item['OutboundLeg']['CarrierIds'][0], item['OutboundLeg']['OriginId'], item['OutboundLeg']['DestinationId'], item['OutboundLeg']['DepartureDate'], item['QuoteDateTime']))
-        return quoteList
+        return url
+
+        '''
+        Browse Routes
+
+Use Browse Routes to retrieve a list of destinations and prices. You can use 'anywhere' to get a list of countries, or you can specify a country or a city (using its Skyscanner code e.g. CDG for Paris Charles-de-Gaulle airport or LOND for London).
+
+http://partners.api.skyscanner.net/apiservices/browseroutes/v1.0/GB/GBP/en-GB/US/anywhere/anytime/anytime?apiKey=<your_api_key>
+
+http://partners.api.skyscanner.net/apiservices/browseroutes/v1.0/GB/GBP/en-GB/US/FR/2017-11/2017-12?apiKey=<your_api_key>
+
+
+
+Browse Dates
+
+Use Browse Dates to retrieve the cheapest prices to your selected destination (city or airport) for a given month (e.g. 2017-12) or for the next 12 months (anytime).
+
+http://partners.api.skyscanner.net/apiservices/browsedates/v1.0/GB/GBP/en-GB/US/LHR/SIN/anytime/anytime?apiKey=<your_api_key>
+
+If you want the response to be formatted in a way that is easy to display as a calendar you can use Browse Grid.
+
+http://partners.api.skyscanner.net/apiservices/browsegrid/v1.0/GB/GBP/en-GB/US/LHR/SIN/2017-12/2017-12?apiKey=<your_api_key>
+
+
+
+Browse Quotes
+
+Use Browse Quotes if you don't need the Routes or Dates built for you and just need the individual quotes.
+
+http://partners.api.skyscanner.net/apiservices/browsequotes/v1.0/GB/GBP/en-GB/US/CDG/EDI/2017-12-12/2017-12-20?apiKey=<your_api_key>
+
+http://en.business.skyscanner.net/dev-guidelines-api
+'''
 
     def whereToGo(self, origin, departure_date, return_date):
         self.getPlanes(origin, "anywhere", departure_date)
