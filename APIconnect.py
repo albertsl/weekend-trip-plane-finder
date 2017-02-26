@@ -12,6 +12,14 @@ def readData(data):
     JSONData = json.loads(data)
     return JSONData
 
+def lowCostFlights(flightList):
+    newFlightList = []
+    for flight in flightList:
+        if flight.direct == True and (flight.currency == "EUR" and flight.price < 150):
+            newFlightList.append(flight)
+            print flight
+    return newFlightList
+
 class SkyScannerPlace:
     def __init__(self, PlaceName, CountryId, RegionId, PlaceId, CityId, CountryName):
         self.PlaceName = PlaceName
@@ -36,7 +44,7 @@ class SkyScannerFlight:
         self.quoteDateTime = quoteDateTime
         self.direct = direct
     def __str__(self):
-        return "going to {} for {} {}".format(self.originId, self.price, self.currency)
+        return "going to {} for {} {}".format(self.destinationId, self.price, self.currency)
     def getOrigin(self):
         return self.originId
 
@@ -81,10 +89,11 @@ class APIconnect:
         return flightList
 
     #Still working from here till the end
-    def whereToGo(self, origin, departure_date, return_date):
+    def whereToGo(self, origin, departure_date, return_date, low_cost=True):
         flightList = self.getFlights(origin, "anywhere", departure_date)
-        for flight in flightList:
-            print flight
+        if low_cost:
+            flightList = lowCostFlights(flightList)
+
         # For every place on the list, get the return possibilities
         # self.getFlights("", origin, return_date)
         #
