@@ -12,6 +12,6 @@ arrival_time2 = ["Sunday night"]
 
 APIconnection = APIconnect.APIconnect("ES", "EUR", "es-ES")
 # print APIconnection.getListOfPlaces("Barce")
-print APIconnection.getPlanes("BCN-sky", "LOND-sky", "2017-03-11")
-# print APIconnection.whereToGo("BCN-sky", "2017-03-11", "2017-03-12")
+#print APIconnection.getFlights("BCN-sky", "LOND-sky", "2017-03-11")
+print APIconnection.whereToGo("BCN-sky", "2017-03-11", "2017-03-12")
 # print APIconnection.whenToGo("BCN-sky", "LOND-sky")

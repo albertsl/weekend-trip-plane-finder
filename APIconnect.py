@@ -26,7 +26,7 @@ class SkyScannerPlace:
         return self.PlaceId
 
 class SkyScannerFlight:
-    def __init__(self, currency, price, carrierId, originId, destinationId, departureDate, quoteDateTime):
+    def __init__(self, currency, price, carrierId, originId, destinationId, departureDate, quoteDateTime, direct):
         self.currency = currency
         self.price = price
         self.carrierId = carrierId
@@ -34,6 +34,11 @@ class SkyScannerFlight:
         self.destinationId = destinationId
         self.departureDate = departureDate
         self.quoteDateTime = quoteDateTime
+        self.direct = direct
+    def __str__(self):
+        return "goinig to {} for {} {}".format(self.originId, self.price, self.currency)
+    def getOrigin(self):
+        return self.originId
 
 class APIconnect:
     def __init__(self, mkt, cur, loc):
@@ -59,7 +64,7 @@ class APIconnect:
             placeList.append(SkyScannerPlace(item['PlaceName'], item['CountryId'], item['RegionId'], item['PlaceId'], item['CityId'], item['CountryName']))
         return url
 
-    def getPlanes(self, origin, destination, departure_date):
+    def getFlights(self, origin, destination, departure_date):
         ''' Returns a list of SkyScannerFlight objects for the given trip conditions'''
         url = "http://partners.api.skyscanner.net/apiservices/browseroutes/v1.0/{}/{}/{}/{}/{}/{}/?apiKey={}".format(self.market, self.currency, self.locale, origin, destination, departure_date, self.API_key)
         data = getData(url)
@@ -68,15 +73,16 @@ class APIconnect:
         currency = dataDict['Currencies'][0]['Code']
         flightList = []
         for item in dataDict['Quotes']:
-            if item['Direct'] == True:
-                flightList.append(SkyScannerFlight(currency, item['MinPrice'], item['OutboundLeg']['CarrierIds'][0], item['OutboundLeg']['OriginId'], item['OutboundLeg']['DestinationId'], item['OutboundLeg']['DepartureDate'], item['QuoteDateTime']))
+            flightList.append(SkyScannerFlight(currency, item['MinPrice'], item['OutboundLeg']['CarrierIds'][0], item['OutboundLeg']['OriginId'], item['OutboundLeg']['DestinationId'], item['OutboundLeg']['DepartureDate'], item['QuoteDateTime'], item['Direct']))
         return flightList
 
     #Still working from here till the end
     def whereToGo(self, origin, departure_date, return_date):
-        self.getPlanes(origin, "anywhere", departure_date)
+        flightList = self.getFlights(origin, "anywhere", departure_date)
+        for flight in flightList:
+            print flight
         # For every place on the list, get the return possibilities
-        # self.getPlanes("", origin, return_date)
+        # self.getFlights("", origin, return_date)
         #
         # url = "http://partners.api.skyscanner.net/apiservices/browsequotes/v1.0/{}/{}/{}/{}/{}/{}/{}?apiKey={}".format(self.market, self.currency, self.locale, origin, "anywhere", departure_date, return_date, self.API_key)
         # data = getData(url)
